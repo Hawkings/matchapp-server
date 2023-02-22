@@ -1,4 +1,4 @@
-const getRandomEmoji = () => {
+export function getRandomEmoji() {
 	const emojis = [
 		"😀",
 		"😃",
@@ -1776,4 +1776,4 @@ const getRandomEmoji = () => {
 	];
 
 	return emojis[~~(Math.random() * emojis.length)];
-};
+}

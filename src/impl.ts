@@ -3,6 +3,7 @@ import { QType } from "./schema/QuestionType";
 import { PromiseResolver, randomIntBetween, sleep } from "./util";
 import { PubSub } from "graphql-subscriptions";
 import { GState } from "./schema/GroupState";
+import { getRandomEmoji } from "./emoji";
 
 type G = NexusGenObjects["Group"];
 interface Group extends G {
