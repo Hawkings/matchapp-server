@@ -1,6 +1,6 @@
 import { NexusGenObjects } from "./schema/nexus-typegen";
 import { QType } from "./schema/QuestionType";
-import { PromiseResolver, sleep } from "./util";
+import { PromiseResolver, randomIntBetween, sleep } from "./util";
 import { PubSub } from "graphql-subscriptions";
 import { GState } from "./schema/GroupState";
 
@@ -124,12 +124,17 @@ function createQuestion(group: Group) {
 	if (group.users.length < MIN_PLAYER_COUNT) return;
 	const end = new Date(Date.now() + GAME_DURATION).toUTCString();
 	const resolver = new PromiseResolver<void>();
+	let answers = [] as { text: string }[];
+	const answersSize = randomIntBetween(2, group.users.length - 1);
+	for (let i = 0; i < answersSize; i++) {
+		answers.push({ text: getRandomEmoji() });
+	}
 	group.question = {
 		id: `${++lastQuestionId}`,
 		groupId: group.id,
 		round: nextRound(group.question?.round),
 		type: Math.random() < 0.5 ? QType.AGREE : QType.DISAGREE,
-		answers: [{ text: "🐶" }, { text: "🐱" }],
+		answers,
 		submittedAnswers: new Map(),
 		end,
 		resolver: () => resolver.resolve(),
