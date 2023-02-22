@@ -1,0 +1,6 @@
+{
+	"prettier.useTabs": true,
+	"prettier.arrowParens": "avoid",
+	"prettier.printWidth": 100,
+	"prettier.trailingComma": "all"
+}
