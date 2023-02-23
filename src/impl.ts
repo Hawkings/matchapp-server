@@ -113,7 +113,7 @@ export function markUserReady(userId: string, ready: boolean) {
 		if (ready) {
 			group.readyUsers.add(userId);
 			if (group.readyUsers.size === group.users.length) {
-				createQuestion(group);
+				startNewGame(group);
 			}
 		} else {
 			group.readyUsers.delete(userId);
@@ -122,11 +122,18 @@ export function markUserReady(userId: string, ready: boolean) {
 	}
 }
 
-function resetReadyState(group: Group) {
+function resetUsers(group: Group) {
 	for (const user of group.users) {
 		user.ready = null;
+		user.score = null;
 	}
 	group.readyUsers.clear();
+}
+
+function startNewGame(group: Group) {
+	resetUsers(group);
+	group.question = null;
+	createQuestion(group);
 }
 
 function createQuestion(group: Group) {
@@ -149,7 +156,6 @@ function createQuestion(group: Group) {
 		resolver: () => resolver.resolve(),
 	};
 	group.state = GState.IN_PROGRESS;
-	resetReadyState(group);
 	pubSub.publish(Event.GROUP_UPDATED, group);
 	Promise.race([sleep(GAME_DURATION), resolver.promise]).then(() => computeResults(group));
 }
