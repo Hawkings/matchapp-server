@@ -122,6 +122,13 @@ export function markUserReady(userId: string, ready: boolean) {
 	}
 }
 
+function resetReadyState(group: Group) {
+	for (const user of group.users) {
+		user.ready = null;
+	}
+	group.readyUsers.clear();
+}
+
 function createQuestion(group: Group) {
 	if (group.users.length < MIN_PLAYER_COUNT) return;
 	const end = new Date(Date.now() + GAME_DURATION).toUTCString();
@@ -142,6 +149,7 @@ function createQuestion(group: Group) {
 		resolver: () => resolver.resolve(),
 	};
 	group.state = GState.IN_PROGRESS;
+	resetReadyState(group);
 	pubSub.publish(Event.GROUP_UPDATED, group);
 	Promise.race([sleep(GAME_DURATION), resolver.promise]).then(() => computeResults(group));
 }
@@ -184,12 +192,12 @@ export function computeResults(group: Group) {
 	}
 	for (const [answerIndex, userList] of m) {
 		for (const user of userList) {
-			const score =
+			const scoreDelta =
 				group.question.type === QType.AGREE
 					? userList.length - 1
 					: group.users.length - userList.length;
-			user.score! += score;
-			group.question.answers[answerIndex].scoreDelta = score;
+			user.score! += scoreDelta;
+			group.question.answers[answerIndex].scoreDelta = scoreDelta;
 			group.question.answers[answerIndex].users = group.question.answers[answerIndex].users ?? [];
 			group.question.answers[answerIndex].users!.push(user);
 		}
