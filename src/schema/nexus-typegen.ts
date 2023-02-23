@@ -62,6 +62,7 @@ export interface NexusGenObjects {
     groupId?: string | null; // ID
     id: string; // ID!
     name: string; // String!
+    ready?: boolean | null; // Boolean
     score?: number | null; // Int
   }
 }
@@ -120,6 +121,7 @@ export interface NexusGenFieldTypes {
     groupId: string | null; // ID
     id: string; // ID!
     name: string; // String!
+    ready: boolean | null; // Boolean
     score: number | null; // Int
   }
 }
@@ -168,6 +170,7 @@ export interface NexusGenFieldTypeNames {
     groupId: 'ID'
     id: 'ID'
     name: 'String'
+    ready: 'Boolean'
     score: 'Int'
   }
 }

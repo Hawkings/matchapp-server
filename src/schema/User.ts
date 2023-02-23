@@ -7,5 +7,6 @@ export const User = objectType({
 		t.nonNull.string("name");
 		t.int("score");
 		t.id("groupId");
+		t.boolean("ready");
 	},
 });

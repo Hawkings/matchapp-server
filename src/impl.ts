@@ -109,6 +109,7 @@ export function markUserReady(userId: string, ready: boolean) {
 	if (user.groupId) {
 		const group = groups.get(user.groupId);
 		if (!group) return;
+		user.ready = ready;
 		if (ready) {
 			group.readyUsers.add(userId);
 			if (group.readyUsers.size === group.users.length) {
@@ -178,14 +179,16 @@ export function computeResults(group: Group) {
 			m.set(answerIndex, [user]);
 		}
 	}
+	for (const user of group.users) {
+		if (user.score == null) user.score = 0;
+	}
 	for (const [answerIndex, userList] of m) {
 		for (const user of userList) {
-			if (user.score == null) user.score = 0;
 			const score =
 				group.question.type === QType.AGREE
-					? userList.length
-					: group.users.length - userList.length + 1;
-			user.score += score;
+					? userList.length - 1
+					: group.users.length - userList.length;
+			user.score! += score;
 			group.question.answers[answerIndex].scoreDelta = score;
 			group.question.answers[answerIndex].users = group.question.answers[answerIndex].users ?? [];
 			group.question.answers[answerIndex].users!.push(user);
