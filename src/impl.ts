@@ -35,7 +35,7 @@ let lastUserId = 0;
 let lastQuestionId = 0;
 
 const GAME_DURATION = 30_000;
-const RESULTS_DURATION = 5_000;
+const RESULTS_DURATION = 6_000;
 const MIN_PLAYER_COUNT = 3;
 const NO_ROUNDS = 10;
 
@@ -161,7 +161,6 @@ function createQuestion(group: Group) {
 }
 
 export function submitAnswer(userId: string, answerIndex: number) {
-	console.log("submitAnswer userId", userId, "answer", answerIndex);
 	const user = users.get(userId);
 	if (!user) {
 		console.log("user with id", userId, "not found");
@@ -175,7 +174,6 @@ export function submitAnswer(userId: string, answerIndex: number) {
 	group.question.submittedAnswers.set(userId, answerIndex);
 	console.log(group.question.submittedAnswers.size, "answers");
 	if (group.question.submittedAnswers.size === group.users.length) {
-		console.log("all answers received, resolving");
 		group.question.resolver();
 	}
 }
