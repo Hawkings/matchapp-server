@@ -228,5 +228,8 @@ export function getAsyncIteratorFor<E extends Event>(event: E) {
 }
 
 function nextRound(previousRound: number | undefined) {
-	return ((previousRound || 0) + 1) % NO_ROUNDS;
+	if (previousRound != null && previousRound >= NO_ROUNDS) {
+		return 0;
+	}
+	return (previousRound || 0) + 1;
 }
