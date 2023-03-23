@@ -13,6 +13,9 @@ import { leaveGroup, removeUser } from "./impl";
 
 const PORT = 7777;
 
+const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
+
 (async () => {
 	const app = express();
 	const httpServer = http.createServer(app);
@@ -34,8 +37,20 @@ const PORT = 7777;
 				if (ctx.connectionParams?.authToken) {
 					const userId = getUserIdFromToken(ctx.connectionParams.authToken as string);
 					if (userId) {
-						leaveGroup(userId!);
-						removeUser(userId!);
+						const timeoutId = setTimeout(() => {
+							leaveGroup(userId!);
+							removeUser(userId!);
+						}, DISCONNECT_DELAY_MS);
+						disconnectTimeouts.set(userId, timeoutId);
+					}
+				}
+			},
+			onConnect(ctx) {
+				if (ctx.connectionParams?.authToken) {
+					const userId = getUserIdFromToken(ctx.connectionParams.authToken as string);
+					if (userId && disconnectTimeouts.has(userId)) {
+						clearTimeout(disconnectTimeouts.get(userId));
+						disconnectTimeouts.delete(userId);
 					}
 				}
 			},
