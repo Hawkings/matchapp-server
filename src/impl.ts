@@ -45,6 +45,7 @@ export function createUser(name: string) {
 		name,
 	};
 	users.set(user.id, user);
+	console.log("new user created", user.id, users);
 	return user;
 }
 
@@ -59,6 +60,7 @@ export function createGroup(userId: string) {
 	};
 	groups.set(group.id, group);
 	user.groupId = group.id;
+	console.log("createGroup id", group.id, "users", group.users);
 	return group;
 }
 
@@ -77,6 +79,7 @@ export function joinGroup(userId: string, groupId: string | null) {
 		user.groupId = group.id;
 		group.users.push(user);
 		pubSub.publish(Event.GROUP_UPDATED, group);
+		console.log("joinGroup id", group.id, "users", group.users);
 		return group;
 	}
 }
@@ -99,7 +102,9 @@ export function leaveGroup(userId: string) {
 			}
 			pubSub.publish(Event.GROUP_UPDATED, group);
 		}
-		user.groupId = undefined;
+		user.groupId = null;
+		user.ready = null;
+		console.log("leaveGroup id", group.id, "users", group.users);
 	}
 }
 
@@ -119,6 +124,7 @@ export function markUserReady(userId: string, ready: boolean) {
 			group.readyUsers.delete(userId);
 		}
 		pubSub.publish(Event.GROUP_UPDATED, group);
+		console.log("markUserReady id", group.id, "users", group.users);
 	}
 }
 
@@ -126,11 +132,13 @@ function resetUsers(group: Group) {
 	for (const user of group.users) {
 		user.ready = null;
 		user.score = null;
+		user.ready = null;
 	}
 	group.readyUsers.clear();
 }
 
 function startNewGame(group: Group) {
+	if (group.users.length < MIN_PLAYER_COUNT) return;
 	resetUsers(group);
 	group.question = null;
 	createQuestion(group);

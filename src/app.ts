@@ -34,6 +34,7 @@ const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
 				}
 			},
 			onDisconnect(ctx) {
+				console.log("Disconnected");
 				if (ctx.connectionParams?.authToken) {
 					const userId = getUserIdFromToken(ctx.connectionParams.authToken as string);
 					if (userId) {
@@ -46,11 +47,16 @@ const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
 				}
 			},
 			onConnect(ctx) {
+				console.log("New connection");
 				if (ctx.connectionParams?.authToken) {
 					const userId = getUserIdFromToken(ctx.connectionParams.authToken as string);
 					if (userId && disconnectTimeouts.has(userId)) {
 						clearTimeout(disconnectTimeouts.get(userId));
 						disconnectTimeouts.delete(userId);
+					}
+					if (userId === undefined) {
+						console.log("bad token received");
+						return { error: "Invalid token" };
 					}
 				}
 			},
