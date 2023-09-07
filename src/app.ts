@@ -1,8 +1,8 @@
-import { ApolloServer } from "apollo-server-express";
-import {
-	ApolloServerPluginDrainHttpServer,
-	ApolloServerPluginLandingPageLocalDefault,
-} from "apollo-server-core";
+import { ApolloServer } from "@apollo/server";
+import { expressMiddleware } from "@apollo/server/express4";
+import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHttpServer";
+import cors from "cors";
+import { json } from "body-parser";
 import express from "express";
 import { schema } from "./schema/schema";
 import http from "http";
@@ -15,6 +15,10 @@ const PORT = 7777;
 
 const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
 const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
+
+interface ApolloContext {
+	userId?: string;
+}
 
 (async () => {
 	const app = express();
@@ -63,13 +67,12 @@ const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
 		},
 		wsServer,
 	);
-	const server = new ApolloServer({
+	const server = new ApolloServer<ApolloContext>({
 		schema,
 		csrfPrevention: true,
 		cache: "bounded",
 		plugins: [
 			ApolloServerPluginDrainHttpServer({ httpServer }),
-			ApolloServerPluginLandingPageLocalDefault({ embed: true }),
 			{
 				async serverWillStart() {
 					return {
@@ -80,17 +83,20 @@ const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
 				},
 			},
 		],
-		context: async ({ req }) => {
-			const token = req.headers.authorization || "";
-			const userId = getUserIdFromToken(token);
-			return { userId };
-		},
 	});
 	await server.start();
-	server.applyMiddleware({
-		app,
-		path: "/graphql",
-	});
+	app.use(
+		"/graphql",
+		cors<cors.CorsRequest>(),
+		json(),
+		expressMiddleware(server, {
+			context: async ({ req }) => {
+				const token = req.headers.authorization || "";
+				const userId = getUserIdFromToken(token);
+				return { userId };
+			},
+		}),
+	);
 	await new Promise<void>(resolve => httpServer.listen({ port: PORT }, resolve));
 	console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
 })();
