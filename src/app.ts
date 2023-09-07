@@ -98,5 +98,5 @@ interface ApolloContext {
 		}),
 	);
 	await new Promise<void>(resolve => httpServer.listen({ port: PORT }, resolve));
-	console.log(`🚀 Server ready at http://localhost:${PORT}${server.graphqlPath}`);
+	console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
 })();

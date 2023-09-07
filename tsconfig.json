@@ -8,7 +8,7 @@
 		"outDir": "dist",
 		"baseUrl": ".",
 		"lib": ["ES2020"],
-		"types": ["node"],
+		"types": ["node", "jest"],
 		"strict": true,
 		"noUnusedLocals": true,
 		"noUnusedParameters": true,

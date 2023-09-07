@@ -1,4 +1,5 @@
-import { ApolloServer } from "apollo-server-express";
+import { ApolloServer } from "@apollo/server";
+import { strict as assert } from "node:assert";
 import { schema } from "./schema";
 import { gql } from "graphql-request";
 import { NexusGenObjects } from "./nexus-typegen";
@@ -64,11 +65,12 @@ describe("Mutations", () => {
 				}
 			}
 		`;
-		const { data } = await testServer.executeOperation({
+		const response = await testServer.executeOperation({
 			query,
 			variables: { name },
 		});
-		return data?.createUser as NexusGenObjects["User"];
+		assert(response.body.kind === "single");
+		return response.body.singleResult.data?.createUser as NexusGenObjects["User"];
 	}
 
 	async function createGroup(userId: string) {
@@ -84,11 +86,12 @@ describe("Mutations", () => {
 				}
 			}
 		`;
-		const { data } = await testServer.executeOperation({
+		const response = await testServer.executeOperation({
 			query,
 			variables: { userId },
 		});
-		return data?.createGroup as NexusGenObjects["Group"];
+		assert(response.body.kind === "single");
+		return response.body.singleResult.data?.createGroup as NexusGenObjects["Group"];
 	}
 
 	async function joinGroup(userId: string, groupId: string) {
@@ -104,11 +107,12 @@ describe("Mutations", () => {
 				}
 			}
 		`;
-		const { data } = await testServer.executeOperation({
+		const response = await testServer.executeOperation({
 			query,
 			variables: { userId, groupId },
 		});
-		return data?.joinGroup as NexusGenObjects["Group"];
+		assert(response.body.kind === "single");
+		return response.body.singleResult.data?.joinGroup as NexusGenObjects["Group"];
 	}
 
 	async function leaveGroup(userId: string) {
@@ -117,10 +121,11 @@ describe("Mutations", () => {
 				leaveGroup(userId: $userId)
 			}
 		`;
-		const { data } = await testServer.executeOperation({
+		const response = await testServer.executeOperation({
 			query,
 			variables: { userId },
 		});
-		return data?.joinGroup as NexusGenObjects["Group"];
+		assert(response.body.kind === "single");
+		return response.body.singleResult.data?.joinGroup as NexusGenObjects["Group"];
 	}
 });
