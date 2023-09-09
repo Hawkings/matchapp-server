@@ -4,7 +4,7 @@ import { ApolloServerPluginDrainHttpServer } from "@apollo/server/plugin/drainHt
 import cors from "cors";
 import { json } from "body-parser";
 import express from "express";
-import { schema } from "./schema/schema";
+import { ApolloContext, schema } from "./schema/schema";
 import http from "http";
 import { getUserIdFromToken } from "./auth";
 import { WebSocketServer } from "ws";
@@ -15,10 +15,6 @@ const PORT = 7777;
 
 const disconnectTimeouts = new Map<string, NodeJS.Timeout>();
 const DISCONNECT_DELAY_MS = 15 * 60 * 1000; // 15 minutes
-
-interface ApolloContext {
-	userId?: string;
-}
 
 (async () => {
 	const app = express();

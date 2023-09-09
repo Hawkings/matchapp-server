@@ -1,12 +1,13 @@
 import { ApolloServer } from "@apollo/server";
 import { strict as assert } from "node:assert";
-import { schema } from "./schema";
+import { ApolloContext, schema } from "./schema";
 import { gql } from "graphql-request";
 import { NexusGenObjects } from "./nexus-typegen";
 import { getUser, getGroup } from "../impl";
+import "../testing/toBeNullish";
 
 describe("Mutations", () => {
-	let testServer: ApolloServer;
+	let testServer: ApolloServer<ApolloContext>;
 
 	beforeEach(() => {
 		testServer = new ApolloServer({
@@ -17,14 +18,15 @@ describe("Mutations", () => {
 	});
 
 	it("createUser creates a user", async () => {
-		const user = await createUser("Peter");
+		const { user, token } = await createUser("Peter");
 
 		expect(user.name).toBe("Peter");
 		expect(typeof user.id).toBe("string");
+		expect(typeof token).toBe("string");
 	});
 
 	it("createGroup creates a group", async () => {
-		const user = await createUser("Peter");
+		const { user } = await createUser("Peter");
 		const group = await createGroup(user.id);
 
 		expect(group.users.length).toBe(1);
@@ -33,8 +35,8 @@ describe("Mutations", () => {
 	});
 
 	it("joinGroup makes player join an existing group", async () => {
-		const peter = await createUser("Peter");
-		const julie = await createUser("Julie");
+		const { user: peter } = await createUser("Peter");
+		const { user: julie } = await createUser("Julie");
 		const group = await createGroup(peter.id);
 		const joinedGroup = await joinGroup(julie.id, group.id);
 
@@ -46,22 +48,25 @@ describe("Mutations", () => {
 	});
 
 	it("leaveGroup removes a user from a group", async () => {
-		const user = await createUser("Peter");
+		const { user } = await createUser("Peter");
 		const group = await createGroup(user.id);
 		await leaveGroup(user.id);
 		const updatedUser = getUser(user.id);
 		const updatedGroup = getGroup(group.id);
 
-		expect(updatedGroup).toBeUndefined();
-		expect(updatedUser?.groupId).toBeUndefined();
+		expect(updatedGroup).toBeNullish();
+		expect(updatedUser?.groupId).toBeNullish();
 	});
 
 	async function createUser(name: string) {
 		const query = gql`
 			mutation Mutation($name: String!) {
 				createUser(name: $name) {
-					id
-					name
+					token
+					user {
+						id
+						name
+					}
 				}
 			}
 		`;
@@ -70,13 +75,13 @@ describe("Mutations", () => {
 			variables: { name },
 		});
 		assert(response.body.kind === "single");
-		return response.body.singleResult.data?.createUser as NexusGenObjects["User"];
+		return response.body.singleResult.data?.createUser as NexusGenObjects["AuthInfo"];
 	}
 
 	async function createGroup(userId: string) {
 		const query = gql`
-			mutation Mutation($userId: ID!) {
-				createGroup(userId: $userId) {
+			mutation Mutation {
+				createGroup {
 					id
 					users {
 						id
@@ -86,18 +91,15 @@ describe("Mutations", () => {
 				}
 			}
 		`;
-		const response = await testServer.executeOperation({
-			query,
-			variables: { userId },
-		});
+		const response = await testServer.executeOperation({ query }, { contextValue: { userId } });
 		assert(response.body.kind === "single");
 		return response.body.singleResult.data?.createGroup as NexusGenObjects["Group"];
 	}
 
 	async function joinGroup(userId: string, groupId: string) {
 		const query = gql`
-			mutation Mutation($userId: ID!, $groupId: ID!) {
-				joinGroup(userId: $userId, groupId: $groupId) {
+			mutation Mutation($groupId: ID!) {
+				joinGroup(groupId: $groupId) {
 					id
 					users {
 						id
@@ -107,24 +109,24 @@ describe("Mutations", () => {
 				}
 			}
 		`;
-		const response = await testServer.executeOperation({
-			query,
-			variables: { userId, groupId },
-		});
+		const response = await testServer.executeOperation(
+			{
+				query,
+				variables: { groupId },
+			},
+			{ contextValue: { userId } },
+		);
 		assert(response.body.kind === "single");
 		return response.body.singleResult.data?.joinGroup as NexusGenObjects["Group"];
 	}
 
 	async function leaveGroup(userId: string) {
 		const query = gql`
-			mutation Mutation($userId: ID!) {
-				leaveGroup(userId: $userId)
+			mutation Mutation {
+				leaveGroup
 			}
 		`;
-		const response = await testServer.executeOperation({
-			query,
-			variables: { userId },
-		});
+		const response = await testServer.executeOperation({ query }, { contextValue: { userId } });
 		assert(response.body.kind === "single");
 		return response.body.singleResult.data?.joinGroup as NexusGenObjects["Group"];
 	}
