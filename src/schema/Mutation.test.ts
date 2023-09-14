@@ -58,6 +58,15 @@ describe("Mutations", () => {
 		expect(updatedUser?.groupId).toBeNullish();
 	});
 
+	it("markUserReady marks the user as ready", async () => {
+		const { user } = await createUser("Peter");
+		await createGroup(user.id);
+		await markUserReady(user.id, true);
+		const updatedUser = getUser(user.id);
+
+		expect(updatedUser?.ready).toBe(true);
+	});
+
 	async function createUser(name: string) {
 		const query = gql`
 			mutation Mutation($name: String!) {
@@ -129,5 +138,21 @@ describe("Mutations", () => {
 		const response = await testServer.executeOperation({ query }, { contextValue: { userId } });
 		assert(response.body.kind === "single");
 		return response.body.singleResult.data?.joinGroup as NexusGenObjects["Group"];
+	}
+
+	async function markUserReady(userId: string, ready: boolean) {
+		const query = gql`
+			mutation Mutation($ready: Boolean!) {
+				markUserReady(ready: $ready)
+			}
+		`;
+		const response = await testServer.executeOperation(
+			{
+				query,
+				variables: { ready },
+			},
+			{ contextValue: { userId } },
+		);
+		assert(response.body.kind === "single");
 	}
 });
